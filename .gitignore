@@ -1,0 +1,4 @@
+*.pyc
+*.log
+models/nlu
+models/dialogue

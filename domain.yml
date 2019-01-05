@@ -1,0 +1,36 @@
+intents:
+  - greet
+  - goodbye
+  - monitor
+  - check_status
+  - out_of_scope
+
+slots:
+   watch_list:
+      type: list
+
+actions:
+  - utter_greet
+  - utter_goodbye
+  - utter_monitor
+  - action_check_status
+  - action_monitor_site
+  - utter_default_fallback
+  - utter_default
+
+templates:
+  utter_greet:
+    - text: "Hey! How are you?"
+    - text: "Nice to meet you!"
+    - text: "How can I help you?"
+
+  utter_goodbye:
+    - text: "Bye!"
+      image: "https://i.imgur.com/nGF1K8f.jpg"
+    - text: "See you again!"
+
+  utter_monitor:
+    - text: "Monitoring site"
+
+  utter_default:
+    - text: "I don't understand"
