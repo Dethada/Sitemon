@@ -4,17 +4,16 @@ from rasa_core.interpreter import RasaNLUInterpreter
 import time
 
 interpreter = RasaNLUInterpreter('models/nlu/current')
-messages = ["Hi! you can chat in this window. Type 'stop' to end the conversation."]
-agent = Agent.load('models/dialogue', interpreter=interpreter)
+welcome = "Hi! you can chat in this window. Type 'stop' to end the conversation."
+agent = Agent.load('models/dialogue', interpreter=interpreter, action_endpoint='http://192.168.14.138:5055/webhook')
 
-print(messages[0])
+print(welcome)
 while True:
-    # print(messages[-1])
     time.sleep(0.3)
     a = input('You: ')
-    messages.append(a)
     if a == 'stop':
         break
     responses = agent.handle_message(a)
+    agent.execute_action(a)
     for r in responses:
         print('Bot: {}'.format(r))

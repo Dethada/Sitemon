@@ -12,6 +12,8 @@ pipenv install
 pipenv shell
 # train model
 make train-all
+# run the action server in vm/docker and set the ip in endpoints.yml
+python3 -m rasa_core_sdk.endpoint --actions main.actions
 # test model
 make run-cmdline
 ```

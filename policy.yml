@@ -1,4 +1,10 @@
-# policies:
-#   - name: FallbackPolicy
-#     nlu_threshold: 0.3
-#     core_threshold: 0.3
+policies:
+  - name: KerasPolicy
+    epochs: 100
+    max_history: 5
+  - name: MemoizationPolicy
+    max_history: 5
+  - name: FormPolicy
+  - name: "FallbackPolicy"
+    nlu_threshold: 0.3
+    core_threshold: 0.3

@@ -1,8 +1,13 @@
+entities:
+  - url
+
 intents:
   - greet
   - goodbye
   - monitor
-  - check_status
+  - status
+  - remove_site
+  - remove_all_sites
   - out_of_scope
 
 slots:
@@ -12,8 +17,9 @@ slots:
 actions:
   - utter_greet
   - utter_goodbye
-  - utter_monitor
-  - action_check_status
+  - action_status
+  - action_remove_site
+  - action_remove_all_sites
   - action_monitor_site
   - utter_default_fallback
   - utter_default
@@ -25,12 +31,9 @@ templates:
     - text: "How can I help you?"
 
   utter_goodbye:
-    - text: "Bye!"
+    - text: "Bye!😢"
       image: "https://i.imgur.com/nGF1K8f.jpg"
     - text: "See you again!"
-
-  utter_monitor:
-    - text: "Monitoring site"
 
   utter_default:
     - text: "I don't understand"

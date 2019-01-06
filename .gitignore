@@ -2,3 +2,4 @@
 *.log
 models/nlu
 models/dialogue
+__pycache__
