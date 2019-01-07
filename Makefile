@@ -3,14 +3,22 @@
 TEST_PATH=./
 
 help:
+	@echo "    run-action"
+	@echo "        Run the action server."
 	@echo "    train-nlu"
 	@echo "        Train the natural language understanding using Rasa NLU."
 	@echo "    train-core"
 	@echo "        Train a dialogue model using Rasa core."
 	@echo "    run-cmdline"
 	@echo "        Starts the bot on the command line"
+	@echo "    run-tele"
+	@echo "        Run the rasa-core with telegram intergration."
 	@echo "    visualize"
 	@echo "        Saves the story graphs into a file"
+	@echo "    evaluate-core"
+	@echo "        Evaluate core"
+	@echo "    clean"
+	@echo "        Delete models."
 
 run-action:
 	python3 -m rasa_core_sdk.endpoint --actions main.actions
@@ -26,6 +34,9 @@ train-all:
 
 run-cmdline:
 	python3 -m rasa_core.run -d models/dialogue -u models/nlu/current --debug --endpoints endpoints.yml
+
+run-tele:
+	python3 -m rasa_core.run -d models/dialogue -u models/nlu/current --port 6000 --endpoints endpoints.yml --credentials ../credentials.yml
 
 visualize:
 	python3 -m rasa_core.visualize -s data/core/ -d domain.yml -o story_graph.png

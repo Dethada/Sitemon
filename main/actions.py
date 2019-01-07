@@ -12,11 +12,6 @@ logger.setLevel(logging.INFO)
 db_file = 'main/database.db'
 
 def create_connection(db_file):
-    """ create a database connection to the SQLite database
-        specified by the db_file
-    :param db_file: database file
-    :return: Connection object or None
-    """
     try:
         conn = sqlite3.connect(db_file)
         return conn
@@ -48,7 +43,7 @@ def insert_url(username, url):
    if response.status_code != 200:
       logger.info('Status: {}'.format(response.status_code))
       return False
-   sitehash = hashlib.sha256(response.text.encode('utf-8')).digest()
+   sitehash = hashlib.sha256(response.text.encode('utf-8')).hexdigest()
    conn = create_connection(db_file)
    cur = conn.cursor()
    cur.execute('''INSERT INTO watchlist VALUES (?,?,?,DATETIME('now','localtime'),'false',?)''', (username, url, sitehash, response.status_code))
@@ -78,7 +73,7 @@ def geturls(text):
       match = urlregex.search(word)
       if match:
          urls.add(match.group())
-   
+
    return urls
 
 class ActionMonitorSite(Action):
@@ -124,12 +119,12 @@ class ActionStatus(Action):
    def run(self, dispatcher, tracker, domain):
       username = tracker.sender_id
       sites = get_urls_by_user(username)
-      
+
       if sites:
          msg = 'Current watch list\n'
          for index, url in enumerate(sites):
             msg += '{}. {}\n'.format(index+1, url[0])
-      
+
          dispatcher.utter_message(msg)
       else:
          dispatcher.utter_message('Not watching any sites')
