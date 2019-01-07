@@ -10,10 +10,6 @@ intents:
   - remove_all_sites
   - out_of_scope
 
-slots:
-   watch_list:
-      type: list
-
 actions:
   - utter_greet
   - utter_goodbye

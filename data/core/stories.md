@@ -3,14 +3,12 @@
   - utter_greet
 * monitor
   - action_monitor_site
-  - slot{"watch_list":"yahoo.com"}
 * goodbye
   - utter_goodbye
 
 ## Monitor Only
 * monitor
   - action_monitor_site
-  - slot{"watch_list":"yahoo.com"}
 
 ## Status Only
 * status
