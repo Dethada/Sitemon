@@ -12,6 +12,9 @@ help:
 	@echo "    visualize"
 	@echo "        Saves the story graphs into a file"
 
+run-action:
+	python3 -m rasa_core_sdk.endpoint --actions main.actions
+
 train-nlu:
 	python3 -m rasa_nlu.train -c nlu_config.yml --data data/nlu -o models --fixed_model_name current --project nlu --verbose
 

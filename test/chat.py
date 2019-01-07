@@ -13,7 +13,6 @@ while True:
     a = input('You: ')
     if a == 'stop':
         break
-    responses = agent.handle_message(a)
-    agent.execute_action(a)
+    responses = agent.handle_text(a)
     for r in responses:
         print('Bot: {}'.format(r))
