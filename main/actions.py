@@ -9,7 +9,7 @@ import hashlib
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-db_file = 'main/database.db'
+db_file = 'database.db'
 
 def create_connection(db_file):
     try:
