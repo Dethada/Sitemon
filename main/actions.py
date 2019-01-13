@@ -37,7 +37,7 @@ def insert_url(username, url):
    # requests follows redirects
    try:
       response = requests.get(url)
-   except Exception as e:
+   except requests.exceptions.RequestException as e:
       logger.info('Exception: {}'.format(e))
       return False
    if response.status_code != 200:

@@ -30,4 +30,4 @@ try:
     TELE_TOKEN = os.environ['TELE_TOKEN']
 except KeyError:
     logging.error('No TELE_TOKEN not set as environment variable.')
-    exit()
+    exit(1)
