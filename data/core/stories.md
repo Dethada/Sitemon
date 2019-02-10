@@ -1,6 +1,10 @@
 ## Standard path
 * greet
   - utter_greet
+* help
+  - utter_help
+* detailed_help
+  - utter_detailed_help
 * monitor
   - action_monitor_site
 * goodbye

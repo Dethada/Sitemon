@@ -4,6 +4,8 @@ entities:
 intents:
   - greet
   - goodbye
+  - help
+  - detailed_help
   - monitor
   - status
   - remove_site
@@ -13,6 +15,8 @@ intents:
 actions:
   - utter_greet
   - utter_goodbye
+  - utter_help
+  - utter_detailed_help
   - action_status
   - action_remove_site
   - action_remove_all_sites
@@ -31,5 +35,11 @@ templates:
       image: "https://i.imgur.com/nGF1K8f.jpg"
     - text: "See you again!"
 
+  utter_help:
+    - text: "Hi! I am Sitemon, a bot that can monitor websites for you. If you need any further explanation for what functions please feel free to ask me!"
+
+  utter_detailed_help:
+    - text: "- You can start monitoring a site by typing \n 'add google.com to my watch list'. \n- If you wish to remove a site from your watchlist, simply type \n 'remove google.com from my watch list'. \n- Alternatively, you can empty your entire watch list by typing \n 'clear my watch list'"
+
   utter_default:
-    - text: "I don't understand"
+    - text: "Sorry, I don't understand but feel free to ask me what I do!"
