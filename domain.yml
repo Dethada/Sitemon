@@ -6,6 +6,7 @@ intents:
   - goodbye
   - help
   - detailed_help
+  - nsfw_check
   - monitor
   - status
   - remove_site
@@ -17,6 +18,7 @@ actions:
   - utter_goodbye
   - utter_help
   - utter_detailed_help
+  - action_nsfw_check
   - action_status
   - action_remove_site
   - action_remove_all_sites
@@ -43,3 +45,4 @@ templates:
 
   utter_default:
     - text: "Sorry, I don't understand but feel free to ask me what I do!"
+

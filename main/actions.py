@@ -6,6 +6,11 @@ import sqlite3
 from sqlite3 import Error
 import requests
 import hashlib
+import subprocess
+import uuid
+import os
+import logging
+from nsfw_predict import predict
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -76,6 +81,31 @@ def geturls(text):
 
    return urls
 
+class ActionNsfwCheck(Action):
+   def name(self):
+      return "action_nsfw_check"
+   def run(self, dispatcher, tracker, domain):
+      logging.basicConfig(filename='example.log',level=logging.DEBUG)
+      username = tracker.sender_id
+
+      new_sites = set(tracker.get_latest_entity_values('url'))
+      new_sites = new_sites.union(geturls(tracker.latest_message['text']))
+      p_sites = list(map(process_url, new_sites))
+
+      if not p_sites:
+        dispatcher.utter_message('You have not entered an url or you have entered an url that is already in your watch list.')
+      else:
+        dispatcher.utter_message('Checking whether sites are nsfw')
+        for site in p_sites:
+           unique_imgfilepath = '/tmp/' + str(uuid.uuid4()) + '.jpg'
+           runjs = subprocess.Popen(['./utils/screenshot.js', '-u',  site, '-o', unique_imgfilepath], stdout=subprocess.PIPE, 
+           stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+           out, err = runjs.communicate()
+           logging.info(type(out))
+           categorydict = predict(unique_imgfilepath)
+           print(categorydict)
+           os.remove(unique_imgfilepath)
+      return []
 class ActionMonitorSite(Action):
    def name(self):
       # type: () -> Text

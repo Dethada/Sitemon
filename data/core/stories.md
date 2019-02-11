@@ -10,6 +10,10 @@
 * goodbye
   - utter_goodbye
 
+## Is NSFW
+* nsfw_check
+  - action_nsfw_check
+  
 ## Monitor Only
 * monitor
   - action_monitor_site
@@ -25,3 +29,4 @@
 ## Remove all sites
 * remove_all_sites
   - action_remove_all_sites
+

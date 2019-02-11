@@ -30,6 +30,12 @@
 - how do i delete a site from my watchlist
 - how do i clear my watch list
 
+## intent:nsfw_check
+- is [www.google.com](url) nsfw
+- i want to know if [http://ai.ai](url) is not safe for work
+- check if [facebook.com](url) is nsfw
+- is [github.io] not safe for work
+
 ## intent:monitor
 - monitor [www.google.com](url)
 - watch [www.sp.edu.sg](url)
@@ -65,3 +71,4 @@
 
 ## regex:url
 - (http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?
+
