@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import requests, time
+import requests
+import time
 from pathlib import Path
 from datetime import datetime
 from datetime import timedelta
@@ -10,6 +11,11 @@ import logging
 from settings import *
 import re
 import random
+import subprocess
+from PIL import Image
+import imagehash
+import os
+import uuid
 
 logging.basicConfig(level=LOG_LEVEL,
                     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -74,8 +80,17 @@ def stripwhitespace(text):
     pattern = re.compile(r'\s+')
     return re.sub(pattern, '', text)
 
-def getsitehash(response):
-    return hashlib.sha256(stripwhitespace(response.text).encode('utf-8')).hexdigest()
+def getsitehash(site):
+    tempname = '/tmp/{}.jpg'.format(str(uuid.uuid4()))
+    process = subprocess.Popen(['utils/screenshot.js', '-u', site.url, '-o', tempname], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
+    if err:
+        logging.error(err)
+        return
+    sitehash = str(imagehash.phash(Image.open(tempname)))
+    if os.path.isfile(tempname):
+        os.remove(tempname)
+    return sitehash
 
 def check(conn):
     cur = conn.cursor()

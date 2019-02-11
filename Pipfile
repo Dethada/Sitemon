@@ -10,6 +10,7 @@ rasa-core = "*"
 rasa-nlu = "*"
 sklearn-crfsuite = "*"
 rasa-core-sdk = "*"
+imagehash = "*"
 
 [requires]
 python_version = "3.6"
