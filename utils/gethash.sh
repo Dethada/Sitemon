@@ -38,11 +38,11 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 
 if [[ "$HELP" == "YES" ]]
 then
-    echo -ne '-u/--url for url\n-o/--output for output filename\n-k/--keep to keep the image file\n'
+    echo -ne '-u/--url for url (required)\n-o/--output for output filename\n-k/--keep to keep the image file\n'
     exit 0
 fi
 
-if [ -z "$URL" ] || [ -z "$OUTPUT" ]
+if [ -z "$URL" ]
 then
     echo -ne "Missing arguments -h/--help for help\n"
     exit 1
