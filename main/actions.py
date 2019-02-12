@@ -13,7 +13,6 @@ import os
 import sys
 import numpy as np
 from PIL import Image
-import operator
 import tensorflow as tf
 import imagehash
 
@@ -150,7 +149,7 @@ class ActionNsfwCheck(Action):
       p_sites = list(map(process_url, new_sites))
       msg = ''
       if not p_sites:
-        dispatcher.utter_message('You have not entered an url or you have entered an url that is already in your watch list.')
+        dispatcher.utter_message('You have not entered a valid url')
       else:
         dispatcher.utter_message('Checking whether sites are nsfw')
         for site in p_sites:
@@ -159,8 +158,7 @@ class ActionNsfwCheck(Action):
            stdin=subprocess.PIPE, stderr=subprocess.PIPE)
            out, err = runjs.communicate()
            categorydict = predict(unique_imgfilepath)
-           maxcategory = categorydict.get('class')
-           msg += 'The website belongs to {} category'.format(maxcategory)
+           msg += '{} belongs to {} the category'.format(site,categorydict.get('class'))
            dispatcher.utter_message(msg)
            os.remove(unique_imgfilepath)
       return []
