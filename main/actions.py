@@ -227,7 +227,6 @@ class ActionNsfwCheck(Action):
         if not p_sites:
             dispatcher.utter_message('You have not entered a valid url')
         else:
-            dispatcher.utter_message('Checking whether sites are nsfw')
             for site in p_sites:
                 tempname = '/tmp/{}.jpg'.format(str(uuid.uuid4()))
                 os.system(
