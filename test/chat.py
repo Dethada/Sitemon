@@ -5,7 +5,8 @@ import time
 
 interpreter = RasaNLUInterpreter('models/nlu/current')
 welcome = "Hi! you can chat in this window. Type 'stop' to end the conversation."
-agent = Agent.load('models/dialogue', interpreter=interpreter, action_endpoint='http://192.168.14.138:5055/webhook')
+agent = Agent.load('models/dialogue', interpreter=interpreter,
+                   action_endpoint='http://192.168.14.138:5055/webhook')
 
 print(welcome)
 while True:

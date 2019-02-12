@@ -1,109 +1,181 @@
+"""
+Action server for rasa core
+"""
 import logging
-from rasa_core_sdk import Action
-from rasa_core_sdk.events import SlotSet
 import re
 import sqlite3
 from sqlite3 import Error
-import requests
-import hashlib
 import subprocess
 import uuid
-import logging
 import os
-import sys
+import requests
 import numpy as np
 from PIL import Image
 import tensorflow as tf
 import imagehash
+from rasa_core_sdk import Action
+from rasa_core_sdk.events import SlotSet
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-db_file = 'database.db'
+LOG_LEVEL = logging.INFO
+
+# Filename for log file
+LOG_FILE = 'actions.log'
+
+
+# File name for the sqlite3 database
+DB_FILE = 'database.db'
+
+
+logging.basicConfig(level=LOG_LEVEL,
+                    format='%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    filename=LOG_FILE,
+                    filemode='a')
+
 
 def create_connection(db_file):
+    """
+    Create a database connection to the SQLite database specified by the file name
+
+    :param fname: database file
+    :return: Connection object or None
+    """
     try:
         conn = sqlite3.connect(db_file)
         return conn
-    except Error as e:
-        print(e)
- 
+    except Error as err:
+        print(err)
+
     return None
 
+
 def process_url(url):
-   if not url.startswith('http://') and not url.startswith('https://'):
-      url = 'http://' + url
-   return url
+    """
+    If the url does not start with http:// or https://, append http:// to it.
+
+    :param url: the url to be processed
+    :return: the processed url
+    """
+    if not url.startswith('http://') and not url.startswith('https://'):
+        url = 'http://' + url
+    return url
+
 
 def get_urls_by_user(username):
-   conn = create_connection(db_file)
-   cur = conn.cursor()
-   cur.execute('SELECT url FROM watchlist WHERE username=?', (username,))
-   urls = cur.fetchall()
-   conn.close()
-   return urls
+    """
+    Finds all the urls watched by the user
+
+    :param username: username of the target user
+    :return: a list of all the urls watched by the user
+    """
+    conn = create_connection(DB_FILE)
+    cur = conn.cursor()
+    cur.execute('SELECT url FROM watchlist WHERE username=?', (username,))
+    urls = cur.fetchall()
+    conn.close()
+    return urls
+
 
 def getsitehash(url):
+    """
+    Gets the perceptual hash of a site
+
+    :param url: the url of the site
+    :return: The perceptual hash of the fullpage screen shot of the site or None if it failed
+    """
     tempname = '/tmp/{}.jpg'.format(str(uuid.uuid4()))
-    process = subprocess.Popen(['utils/screenshot.js', '-u', url, '-o', tempname], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = process.communicate()
-    if err:
-      #   logging.error(err)
-        print(err)
-        return
+    process = subprocess.run(
+        ['utils/screenshot.js', '-u', url, '-o', tempname], stderr=subprocess.STDOUT)
+    if process.returncode != 0:
+        logging.error(process.stdout)
+        return None
     sitehash = str(imagehash.phash(Image.open(tempname)))
     if os.path.isfile(tempname):
         os.remove(tempname)
     return sitehash
 
+
 def insert_url(username, url):
-   # requests follows redirects
-   try:
-      response = requests.get(url)
-   except requests.exceptions.RequestException as e:
-      logger.info('Exception: {}'.format(e))
-      return False
-   if response.status_code != 200:
-      logger.info('Status: {}'.format(response.status_code))
-      return False
-   sitehash = getsitehash(url)
-   conn = create_connection(db_file)
-   cur = conn.cursor()
-   cur.execute('''INSERT INTO watchlist VALUES (?,?,?,DATETIME('now','localtime'),'false',?)''', (username, response.url, sitehash, response.status_code))
-   conn.commit()
-   conn.close()
-   return True
+    """
+    Insert new url to watch into database, the url
+    inserted will be the one after following redirects
+
+    :param username: username of the user that wants to watch the url
+    :param url: the url to watch
+    :return: True if successful, False if failed
+    """
+    try:
+        response = requests.get(url)
+    except requests.exceptions.RequestException as err:
+        logging.info('Exception: {}'.format(err))
+        return False
+    if response.status_code != 200:
+        logging.info('Status: {}'.format(response.status_code))
+        return False
+    sitehash = getsitehash(url)
+    conn = create_connection(DB_FILE)
+    cur = conn.cursor()
+    cur.execute('''INSERT INTO watchlist VALUES (?,?,?,DATETIME('now','localtime'),'false',?)''',
+                (username, response.url, sitehash, response.status_code))
+    conn.commit()
+    conn.close()
+    return True
+
 
 def remove_url(username, url):
-   conn = create_connection(db_file)
-   cur = conn.cursor()
-   cur.execute('DELETE FROM watchlist WHERE username=? and url=?', (username,url))
-   conn.commit()
-   conn.close()
+    """
+    Remove an url from the database
+
+    :param username: username of the user that wants to remove the url
+    :param url: the url to remove
+    """
+    conn = create_connection(DB_FILE)
+    cur = conn.cursor()
+    cur.execute('DELETE FROM watchlist WHERE username=? and url=?',
+                (username, url))
+    conn.commit()
+    conn.close()
+
 
 def clear_watchlist(username):
-   conn = create_connection(db_file)
-   cur = conn.cursor()
-   cur.execute('DELETE FROM watchlist WHERE username=?', (username,))
-   conn.commit()
-   conn.close()
+    """
+    Remove all the urls added by the user
+
+    :param username: username of the user that wants to remove all the urls
+    """
+    conn = create_connection(DB_FILE)
+    cur = conn.cursor()
+    cur.execute('DELETE FROM watchlist WHERE username=?', (username,))
+    conn.commit()
+    conn.close()
+
 
 def geturls(text):
-   urlregex = re.compile('(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?')
+    """
+    Finds all the urls in the string
 
-   urls = set()
-   for word in text.split(' '):
-      match = urlregex.search(word)
-      if match:
-         urls.add(match.group())
+    :param text: the string to search in
+    :return: set of urls found in the string
+    """
+    urlregex = re.compile(
+        r'(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?')
 
-   return urls
+    urls = set()
+    for word in text.split(' '):
+        match = urlregex.search(word)
+        if match:
+            urls.add(match.group())
 
-_MODEL_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'saved_model')
+    return urls
+
+
+_MODEL_DIR = os.path.join(os.path.abspath(
+    os.path.dirname(__file__)), 'saved_model')
 
 _IMAGE_SIZE = 64
 _BATCH_SIZE = 128
 
-_LABEL_MAP = {0:'drawings', 1:'hentai', 2:'neutral', 3:'porn', 4:'sexy'}
+_LABEL_MAP = {0: 'drawings', 1: 'hentai', 2: 'neutral', 3: 'porn', 4: 'sexy'}
 
 
 def standardize(img):
@@ -112,18 +184,21 @@ def standardize(img):
     img = (img - mean) / std
     return img
 
-def load_image( infilename ) :
-    img = Image.open( infilename )
+
+def load_image(infilename):
+    img = Image.open(infilename)
     img = img.resize((_IMAGE_SIZE, _IMAGE_SIZE))
     img.load()
-    data = np.asarray( img, dtype=np.float32 )
+    data = np.asarray(img, dtype=np.float32)
     data = standardize(data)
     return data
+
 
 def predict(image_path):
     with tf.Session() as sess:
         graph = tf.get_default_graph()
-        tf.saved_model.loader.load(sess, [tf.saved_model.tag_constants.SERVING], _MODEL_DIR)
+        tf.saved_model.loader.load(
+            sess, [tf.saved_model.tag_constants.SERVING], _MODEL_DIR)
         inputs = graph.get_tensor_by_name("input_tensor:0")
         probabilities_op = graph.get_tensor_by_name('softmax_tensor:0')
         class_index_op = graph.get_tensor_by_name('ArgMax:0')
@@ -132,123 +207,143 @@ def predict(image_path):
         probabilities, class_index = sess.run([probabilities_op, class_index_op],
                                               feed_dict={inputs: [image_data] * _BATCH_SIZE})
 
-        probabilities_dict = {_LABEL_MAP.get(i): l for i, l in enumerate(probabilities[0])}
+        probabilities_dict = {_LABEL_MAP.get(
+            i): l for i, l in enumerate(probabilities[0])}
         pre_label = _LABEL_MAP.get(class_index[0])
         result = {"class": pre_label, "probability": probabilities_dict}
         return result
 
-class ActionNsfwCheck(Action):
-   def name(self):
-      return "action_nsfw_check"
-   def run(self, dispatcher, tracker, domain):
-      logging.basicConfig(filename='example.log',level=logging.DEBUG)
-      username = tracker.sender_id
 
-      new_sites = set(tracker.get_latest_entity_values('url'))
-      new_sites = new_sites.union(geturls(tracker.latest_message['text']))
-      p_sites = list(map(process_url, new_sites))
-      msg = ''
-      if not p_sites:
-        dispatcher.utter_message('You have not entered a valid url')
-      else:
-        dispatcher.utter_message('Checking whether sites are nsfw')
-        for site in p_sites:
-           unique_imgfilepath = '/tmp/' + str(uuid.uuid4()) + '.jpg'
-           runjs = subprocess.Popen(['./utils/screenshot.js', '-u',  site, '-o', unique_imgfilepath], stdout=subprocess.PIPE, 
-           stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-           out, err = runjs.communicate()
-           categorydict = predict(unique_imgfilepath)
-           msg += '{} belongs to {} the category'.format(site,categorydict.get('class'))
-           dispatcher.utter_message(msg)
-           os.remove(unique_imgfilepath)
-      return []
+class ActionNsfwCheck(Action):
+    """ action_nsfw_check class """
+
+    def name(self):
+        return "action_nsfw_check"
+
+    def run(self, dispatcher, tracker, domain):
+        new_sites = set(tracker.get_latest_entity_values('url'))
+        new_sites = new_sites.union(geturls(tracker.latest_message['text']))
+        p_sites = list(map(process_url, new_sites))
+        msg = ''
+        if not p_sites:
+            dispatcher.utter_message('You have not entered a valid url')
+        else:
+            dispatcher.utter_message('Checking whether sites are nsfw')
+            for site in p_sites:
+                tempname = '/tmp/{}.jpg'.format(str(uuid.uuid4()))
+                process = subprocess.run(
+                    ['utils/screenshot.js', '-u', site, '-o', tempname], stderr=subprocess.STDOUT)
+                if process.returncode != 0:
+                    logging.error(process.stdout)
+                    msg += 'An error occured when checking {}\n'.format(site)
+                    continue
+                categorydict = predict(tempname)
+                msg += '{} belongs to {} the category\n'.format(
+                    site, categorydict.get('class'))
+                os.remove(tempname)
+            dispatcher.utter_message(msg)
+        return []
+
 
 class ActionMonitorSite(Action):
-   def name(self):
-      # type: () -> Text
-      return "action_monitor_site"
+    """ action_monitor_site class """
 
-   def run(self, dispatcher, tracker, domain):
-      username = tracker.sender_id
-      logger.info('Sender_id: {}'.format(username))
-      sites = get_urls_by_user(username)
+    def name(self):
+        # type: () -> Text
+        return "action_monitor_site"
 
-      new_sites = set(tracker.get_latest_entity_values('url'))
+    def run(self, dispatcher, tracker, domain):
+        username = tracker.sender_id
+        logging.info('Sender_id: {}'.format(username))
+        sites = get_urls_by_user(username)
 
-      new_sites = new_sites.union(geturls(tracker.latest_message['text']))
-      msg = ''
-      if sites:
-         for site in new_sites:
-            p_site = process_url(site)
-            if (p_site,) not in sites:
-               if insert_url(username, p_site):
-                  msg += 'Added {} to watch list\n'.format(p_site)
-               else:
-                  msg += 'Failed to add {} to watch list\n'.format(p_site)
-      else:
-         for site in new_sites:
-            p_site = process_url(site)
-            if insert_url(username, p_site):
-               msg += 'Added {} to watch list\n'.format(p_site)
-            else:
-               msg += 'Failed to add {} to watch list\n'.format(p_site)
+        new_sites = set(tracker.get_latest_entity_values('url'))
 
-      # logger.info('Sites: {}'.format(sites))
-      if msg == '':
-         msg = 'You have not entered an url or you have entered an url that is already in your watch list.'
-      dispatcher.utter_message(msg)
-      return []
+        new_sites = new_sites.union(geturls(tracker.latest_message['text']))
+        msg = ''
+        if sites:
+            for site in new_sites:
+                p_site = process_url(site)
+                if (p_site,) not in sites:
+                    if insert_url(username, p_site):
+                        msg += 'Added {} to watch list\n'.format(p_site)
+                    else:
+                        msg += 'Failed to add {} to watch list\n'.format(
+                            p_site)
+        else:
+            for site in new_sites:
+                p_site = process_url(site)
+                if insert_url(username, p_site):
+                    msg += 'Added {} to watch list\n'.format(p_site)
+                else:
+                    msg += 'Failed to add {} to watch list\n'.format(p_site)
+
+        # logging.info('Sites: {}'.format(sites))
+        if msg == '':
+            msg = 'You have not entered an url or an url that is already in your watch list.'
+        dispatcher.utter_message(msg)
+        return []
+
 
 class ActionStatus(Action):
-   def name(self):
-      return "action_status"
+    """ action_status class """
 
-   def run(self, dispatcher, tracker, domain):
-      username = tracker.sender_id
-      sites = get_urls_by_user(username)
+    def name(self):
+        return "action_status"
 
-      if sites:
-         msg = 'Current watch list\n'
-         for index, url in enumerate(sites):
-            msg += '{}. {}\n'.format(index+1, url[0])
+    def run(self, dispatcher, tracker, domain):
+        username = tracker.sender_id
+        sites = get_urls_by_user(username)
 
-         dispatcher.utter_message(msg)
-      else:
-         dispatcher.utter_message('Not watching any sites')
+        if sites:
+            msg = 'Current watch list\n'
+            for index, url in enumerate(sites):
+                msg += '{}. {}\n'.format(index+1, url[0])
 
-      return []
+            dispatcher.utter_message(msg)
+        else:
+            dispatcher.utter_message('Not watching any sites')
+
+        return []
+
 
 class ActionRemoveSite(Action):
-   def name(self):
-      return "action_remove_site"
+    """ action_remove_site class """
 
-   def run(self, dispatcher, tracker, domain):
-      username = tracker.sender_id
-      sites = get_urls_by_user(username)
-      logger.info('Sites: {}'.format(sites))
-      remove_sites = set(tracker.get_latest_entity_values('url'))
+    def name(self):
+        return "action_remove_site"
 
-      remove_sites = remove_sites.union(geturls(tracker.latest_message['text']))
-      msg = ''
-      if sites:
-         for site in remove_sites:
-            p_site = process_url(site)
-            logger.info('Processed Site: {}'.format(p_site))
-            if (p_site,) in sites:
-               remove_url(username, p_site)
-               msg += 'Removed {} from watch list\n'.format(p_site)
+    def run(self, dispatcher, tracker, domain):
+        username = tracker.sender_id
+        sites = get_urls_by_user(username)
+        logging.info('Sites: {}'.format(sites))
+        remove_sites = set(tracker.get_latest_entity_values('url'))
 
-      if msg == '':
-         msg = 'No sites removed'
-      dispatcher.utter_message(msg)
+        remove_sites = remove_sites.union(
+            geturls(tracker.latest_message['text']))
+        msg = ''
+        if sites:
+            for site in remove_sites:
+                p_site = process_url(site)
+                logging.info('Processed Site: {}'.format(p_site))
+                if (p_site,) in sites:
+                    remove_url(username, p_site)
+                    msg += 'Removed {} from watch list\n'.format(p_site)
 
-      return [SlotSet("watch_list", sites if sites else None)]
+        if msg == '':
+            msg = 'No sites removed'
+        dispatcher.utter_message(msg)
+
+        return [SlotSet("watch_list", sites if sites else None)]
+
 
 class ActionRemoveAllSites(Action):
-   def name(self):
-      return "action_remove_all_sites"
+    """ action_remove_all_sites class """
 
-   def run(self, dispatcher, tracker, domain):
-      clear_watchlist(tracker.sender_id)
-      dispatcher.utter_message('Watch list cleared')
-      return []
+    def name(self):
+        return "action_remove_all_sites"
+
+    def run(self, dispatcher, tracker, domain):
+        clear_watchlist(tracker.sender_id)
+        dispatcher.utter_message('Watch list cleared')
+        return []

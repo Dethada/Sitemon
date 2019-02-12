@@ -3,27 +3,30 @@ import sqlite3
 
 db_file = 'main/database.db'
 
-def create_connection(db_file):
+
+def create_connection(fname):
     """ create a database connection to the SQLite database
-        specified by the db_file
-    :param db_file: database file
+        specified by the fname
+    :param fname: database file
     :return: Connection object or None
     """
     try:
-        conn = sqlite3.connect(db_file)
+        conn = sqlite3.connect(fname)
         return conn
-    except Error as e:
+    except Exception as e:
         print(e)
- 
+
     return None
 
+
 def get_urls_by_user(username):
-      conn = create_connection(db_file)
-      cur = conn.cursor()
-      cur.execute('SELECT url FROM watchlist WHERE username=?', (username,))
-      urls = cur.fetchall()
-      conn.close()
-      return urls
+    conn = create_connection(db_file)
+    cur = conn.cursor()
+    cur.execute('SELECT url FROM watchlist WHERE username=?', (username,))
+    urls = cur.fetchall()
+    conn.close()
+    return urls
+
 
 tmp = get_urls_by_user('default')
 print(type(tmp))
