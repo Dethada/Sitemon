@@ -344,6 +344,6 @@ class ActionRemoveAllSites(Action):
         return "action_remove_all_sites"
 
     def run(self, dispatcher, tracker, domain):
+        # dispatcher.utter_template('utter_confirm_clearwatchlist', tracker)
         clear_watchlist(tracker.sender_id)
-        dispatcher.utter_message('Watch list cleared')
         return []

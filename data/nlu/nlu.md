@@ -19,6 +19,7 @@
 - help
 - show help
 - who are you
+- send help
 
 ## intent:detailed_help
 - tell me more
@@ -44,6 +45,14 @@
 - keep an eye on [github.io](url)
 - i want to add [syzygyy.xyz](url) to my watch list 
 
+## intent:remove_site
+- remove [www.sp.edu.sg](url)
+- remove [facebook.com](url) from watch list
+- delete [http://ai.ai/](url)
+- stop monitoring [syzygyy.xyz](url)
+- i want to delete [www.google.com](url) from my watchlist
+- terminate monitoring for [github.io](url)
+
 ## intent:status
 - who am i monitoring
 - status
@@ -61,14 +70,5 @@
 - delete all sites
 - i want to delete all sites in my watch list
 
-## intent:remove_site
-- remove [www.sp.edu.sg](url)
-- remove [facebook.com](url) from watch list
-- delete [http://ai.ai/](url)
-- stop monitoring [syzygyy.xyz](url)
-- i want to delete [www.google.com](url) from my watchlist
-- terminate monitoring for [github.io](url)
-
 ## regex:url
 - (http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?
-
