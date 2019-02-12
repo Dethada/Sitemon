@@ -6,11 +6,15 @@ import sqlite3
 from sqlite3 import Error
 import requests
 import hashlib
-import uuid
 import subprocess
-import imagehash
-from PIL import Image
+import uuid
+import logging
 import os
+import sys
+import numpy as np
+from PIL import Image
+import tensorflow as tf
+import imagehash
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -93,6 +97,71 @@ def geturls(text):
          urls.add(match.group())
 
    return urls
+
+_MODEL_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'saved_model')
+
+_IMAGE_SIZE = 64
+_BATCH_SIZE = 128
+
+_LABEL_MAP = {0:'drawings', 1:'hentai', 2:'neutral', 3:'porn', 4:'sexy'}
+
+
+def standardize(img):
+    mean = np.mean(img)
+    std = np.std(img)
+    img = (img - mean) / std
+    return img
+
+def load_image( infilename ) :
+    img = Image.open( infilename )
+    img = img.resize((_IMAGE_SIZE, _IMAGE_SIZE))
+    img.load()
+    data = np.asarray( img, dtype=np.float32 )
+    data = standardize(data)
+    return data
+
+def predict(image_path):
+    with tf.Session() as sess:
+        graph = tf.get_default_graph()
+        tf.saved_model.loader.load(sess, [tf.saved_model.tag_constants.SERVING], _MODEL_DIR)
+        inputs = graph.get_tensor_by_name("input_tensor:0")
+        probabilities_op = graph.get_tensor_by_name('softmax_tensor:0')
+        class_index_op = graph.get_tensor_by_name('ArgMax:0')
+
+        image_data = load_image(image_path)
+        probabilities, class_index = sess.run([probabilities_op, class_index_op],
+                                              feed_dict={inputs: [image_data] * _BATCH_SIZE})
+
+        probabilities_dict = {_LABEL_MAP.get(i): l for i, l in enumerate(probabilities[0])}
+        pre_label = _LABEL_MAP.get(class_index[0])
+        result = {"class": pre_label, "probability": probabilities_dict}
+        return result
+
+class ActionNsfwCheck(Action):
+   def name(self):
+      return "action_nsfw_check"
+   def run(self, dispatcher, tracker, domain):
+      logging.basicConfig(filename='example.log',level=logging.DEBUG)
+      username = tracker.sender_id
+
+      new_sites = set(tracker.get_latest_entity_values('url'))
+      new_sites = new_sites.union(geturls(tracker.latest_message['text']))
+      p_sites = list(map(process_url, new_sites))
+      msg = ''
+      if not p_sites:
+        dispatcher.utter_message('You have not entered a valid url')
+      else:
+        dispatcher.utter_message('Checking whether sites are nsfw')
+        for site in p_sites:
+           unique_imgfilepath = '/tmp/' + str(uuid.uuid4()) + '.jpg'
+           runjs = subprocess.Popen(['./utils/screenshot.js', '-u',  site, '-o', unique_imgfilepath], stdout=subprocess.PIPE, 
+           stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+           out, err = runjs.communicate()
+           categorydict = predict(unique_imgfilepath)
+           msg += '{} belongs to {} the category'.format(site,categorydict.get('class'))
+           dispatcher.utter_message(msg)
+           os.remove(unique_imgfilepath)
+      return []
 
 class ActionMonitorSite(Action):
    def name(self):
