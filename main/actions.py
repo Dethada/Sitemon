@@ -8,9 +8,13 @@ import requests
 import hashlib
 import subprocess
 import uuid
-import os
 import logging
-from nsfw_predict import predict
+import os
+import sys
+import numpy as np
+from PIL import Image
+import operator
+import tensorflow as tf
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -81,6 +85,45 @@ def geturls(text):
 
    return urls
 
+_MODEL_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'saved_model')
+
+_IMAGE_SIZE = 64
+_BATCH_SIZE = 128
+
+_LABEL_MAP = {0:'drawings', 1:'hentai', 2:'neutral', 3:'porn', 4:'sexy'}
+
+
+def standardize(img):
+    mean = np.mean(img)
+    std = np.std(img)
+    img = (img - mean) / std
+    return img
+
+def load_image( infilename ) :
+    img = Image.open( infilename )
+    img = img.resize((_IMAGE_SIZE, _IMAGE_SIZE))
+    img.load()
+    data = np.asarray( img, dtype=np.float32 )
+    data = standardize(data)
+    return data
+
+def predict(image_path):
+    with tf.Session() as sess:
+        graph = tf.get_default_graph()
+        tf.saved_model.loader.load(sess, [tf.saved_model.tag_constants.SERVING], _MODEL_DIR)
+        inputs = graph.get_tensor_by_name("input_tensor:0")
+        probabilities_op = graph.get_tensor_by_name('softmax_tensor:0')
+        class_index_op = graph.get_tensor_by_name('ArgMax:0')
+
+        image_data = load_image(image_path)
+        probabilities, class_index = sess.run([probabilities_op, class_index_op],
+                                              feed_dict={inputs: [image_data] * _BATCH_SIZE})
+
+        probabilities_dict = {_LABEL_MAP.get(i): l for i, l in enumerate(probabilities[0])}
+        pre_label = _LABEL_MAP.get(class_index[0])
+        result = {"class": pre_label, "probability": probabilities_dict}
+        return result
+
 class ActionNsfwCheck(Action):
    def name(self):
       return "action_nsfw_check"
@@ -91,7 +134,7 @@ class ActionNsfwCheck(Action):
       new_sites = set(tracker.get_latest_entity_values('url'))
       new_sites = new_sites.union(geturls(tracker.latest_message['text']))
       p_sites = list(map(process_url, new_sites))
-
+      msg = ''
       if not p_sites:
         dispatcher.utter_message('You have not entered an url or you have entered an url that is already in your watch list.')
       else:
@@ -101,11 +144,13 @@ class ActionNsfwCheck(Action):
            runjs = subprocess.Popen(['./utils/screenshot.js', '-u',  site, '-o', unique_imgfilepath], stdout=subprocess.PIPE, 
            stdin=subprocess.PIPE, stderr=subprocess.PIPE)
            out, err = runjs.communicate()
-           logging.info(type(out))
            categorydict = predict(unique_imgfilepath)
-           print(categorydict)
+           maxcategory = categorydict.get('class')
+           msg += 'The website belongs to {} category'.format(maxcategory)
+           dispatcher.utter_message(msg)
            os.remove(unique_imgfilepath)
       return []
+
 class ActionMonitorSite(Action):
    def name(self):
       # type: () -> Text
