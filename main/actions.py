@@ -5,7 +5,6 @@ import logging
 import re
 import sqlite3
 from sqlite3 import Error
-import subprocess
 import uuid
 import os
 import requests
@@ -14,7 +13,6 @@ from PIL import Image
 import tensorflow as tf
 import imagehash
 from rasa_core_sdk import Action
-from rasa_core_sdk.events import SlotSet
 
 LOG_LEVEL = logging.INFO
 
@@ -84,12 +82,11 @@ def getsitehash(url):
     :return: The perceptual hash of the fullpage screen shot of the site or None if it failed
     """
     tempname = '/tmp/{}.jpg'.format(str(uuid.uuid4()))
-    process = subprocess.run(
-        ['utils/screenshot.js', '-u', url, '-o', tempname], stderr=subprocess.STDOUT)
-    if process.returncode != 0:
-        logging.error(process.stdout)
+    os.system('utils/screenshot.js -u \'{}\' -o {}'.format(url, tempname))
+    try:
+        sitehash = str(imagehash.phash(Image.open(tempname)))
+    except FileNotFoundError:
         return None
-    sitehash = str(imagehash.phash(Image.open(tempname)))
     if os.path.isfile(tempname):
         os.remove(tempname)
     return sitehash
@@ -113,6 +110,8 @@ def insert_url(username, url):
         logging.info('Status: {}'.format(response.status_code))
         return False
     sitehash = getsitehash(url)
+    if sitehash is None:
+        return False
     conn = create_connection(DB_FILE)
     cur = conn.cursor()
     cur.execute('''INSERT INTO watchlist VALUES (?,?,?,DATETIME('now','localtime'),'false',?)''',
@@ -231,10 +230,9 @@ class ActionNsfwCheck(Action):
             dispatcher.utter_message('Checking whether sites are nsfw')
             for site in p_sites:
                 tempname = '/tmp/{}.jpg'.format(str(uuid.uuid4()))
-                process = subprocess.run(
-                    ['utils/screenshot.js', '-u', site, '-o', tempname], stderr=subprocess.STDOUT)
-                if process.returncode != 0:
-                    logging.error(process.stdout)
+                os.system(
+                    'utils/screenshot.js -u \'{}\' -o {}'.format(site, tempname))
+                if not os.path.isfile(tempname):
                     msg += 'An error occured when checking {}\n'.format(site)
                     continue
                 categorydict = predict(tempname)
@@ -334,7 +332,7 @@ class ActionRemoveSite(Action):
             msg = 'No sites removed'
         dispatcher.utter_message(msg)
 
-        return [SlotSet("watch_list", sites if sites else None)]
+        return []
 
 
 class ActionRemoveAllSites(Action):

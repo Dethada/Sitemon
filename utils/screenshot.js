@@ -17,24 +17,33 @@ if (outputfile == null || url == null ) {
 }
 
 if (!validUrl.isUri(url)){
-    console.log('Bad URL');
+    console.error('Bad URL');
     process.exit(1);
 }
 
 async function run() {
-const browser = await puppeteer.launch({
-    headless: true,
-    timeout: 100000
-});
+    try {
+        const browser = await puppeteer.launch({
+            headless: true,
+            timeout: 100000
+            // args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
 
-const page = await browser.newPage();
+        const page = await browser.newPage();
 
-await page.goto(url, {
-    waitUntil: 'networkidle2'
-});
+        page.on('error', msg => {
+            throw msg ;
+        });
 
-await page.screenshot({ path: outputfile, fullPage: true });
-    browser.close();
+        await page.goto(url, {
+            waitUntil: 'networkidle2'
+        });
+
+        await page.screenshot({ path: outputfile, fullPage: true });
+        await browser.close();
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 run();

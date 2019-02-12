@@ -3,14 +3,16 @@
 TEST_PATH=./
 
 help:
-	@echo "    run-action"
-	@echo "        Run the action server."
 	@echo "    train-nlu"
 	@echo "        Train the natural language understanding using Rasa NLU."
 	@echo "    train-core"
 	@echo "        Train a dialogue model using Rasa core."
+	@echo "    run-action"
+	@echo "        Run the action server."
 	@echo "    run-cmdline"
 	@echo "        Starts the bot on the command line"
+	@echo "    run-monitor"
+	@echo "        Run the monitor system."
 	@echo "    run-tele"
 	@echo "        Run the rasa-core with telegram intergration."
 	@echo "    visualize"
@@ -19,9 +21,6 @@ help:
 	@echo "        Evaluate core"
 	@echo "    clean"
 	@echo "        Delete models."
-
-run-action:
-	python3 -m rasa_core_sdk.endpoint --actions main.actions
 
 train-nlu:
 	python3 -m rasa_nlu.train -c nlu_config.yml --data data/nlu -o models --fixed_model_name current --project nlu --verbose
@@ -32,8 +31,14 @@ train-core:
 train-all:
 	make train-nlu && make train-core
 
+run-action:
+	python3 -m rasa_core_sdk.endpoint --actions main.actions
+
 run-cmdline:
 	python3 -m rasa_core.run -d models/dialogue -u models/nlu/current --debug --endpoints endpoints.yml
+
+run-monitor:
+	python3 monitor/monitor.py
 
 run-tele:
 	python3 -m rasa_core.run -d models/dialogue -u models/nlu/current --port 6000 --endpoints endpoints.yml --credentials ../credentials.yml

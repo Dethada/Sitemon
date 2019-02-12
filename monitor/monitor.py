@@ -10,7 +10,6 @@ import sqlite3
 from sqlite3 import Error
 import logging
 import random
-import subprocess
 import os
 import uuid
 from collections import namedtuple
@@ -146,12 +145,11 @@ def getsitehash(url):
     :return: The perceptual hash of the fullpage screen shot of the site or None if it failed
     """
     tempname = '/tmp/{}.jpg'.format(str(uuid.uuid4()))
-    process = subprocess.run(
-        ['utils/screenshot.js', '-u', url, '-o', tempname], stderr=subprocess.STDOUT)
-    if process.returncode != 0:
-        logging.error(process.stdout)
+    os.system('utils/screenshot.js -u \'{}\' -o {}'.format(url, tempname))
+    try:
+        sitehash = str(imagehash.phash(Image.open(tempname)))
+    except FileNotFoundError:
         return None
-    sitehash = str(imagehash.phash(Image.open(tempname)))
     if os.path.isfile(tempname):
         os.remove(tempname)
     return sitehash
