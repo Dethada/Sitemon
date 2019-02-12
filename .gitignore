@@ -4,3 +4,4 @@ models/nlu
 models/dialogue
 __pycache__
 .vscode
+node_modules

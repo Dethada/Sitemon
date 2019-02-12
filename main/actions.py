@@ -15,6 +15,7 @@ import numpy as np
 from PIL import Image
 import operator
 import tensorflow as tf
+import imagehash
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -42,6 +43,19 @@ def get_urls_by_user(username):
    conn.close()
    return urls
 
+def getsitehash(url):
+    tempname = '/tmp/{}.jpg'.format(str(uuid.uuid4()))
+    process = subprocess.Popen(['utils/screenshot.js', '-u', url, '-o', tempname], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
+    if err:
+      #   logging.error(err)
+        print(err)
+        return
+    sitehash = str(imagehash.phash(Image.open(tempname)))
+    if os.path.isfile(tempname):
+        os.remove(tempname)
+    return sitehash
+
 def insert_url(username, url):
    # requests follows redirects
    try:
@@ -52,10 +66,10 @@ def insert_url(username, url):
    if response.status_code != 200:
       logger.info('Status: {}'.format(response.status_code))
       return False
-   sitehash = hashlib.sha256(response.text.encode('utf-8')).hexdigest()
+   sitehash = getsitehash(url)
    conn = create_connection(db_file)
    cur = conn.cursor()
-   cur.execute('''INSERT INTO watchlist VALUES (?,?,?,DATETIME('now','localtime'),'false',?)''', (username, url, sitehash, response.status_code))
+   cur.execute('''INSERT INTO watchlist VALUES (?,?,?,DATETIME('now','localtime'),'false',?)''', (username, response.url, sitehash, response.status_code))
    conn.commit()
    conn.close()
    return True
