@@ -4,6 +4,19 @@
 - Python >= 3.6
 - [Pipenv](https://pipenv.readthedocs.io/en/latest/)
 
+## Folder Structure
+```
+.
+├── data
+│   ├── core ---------------> Rasa Core
+│   ├── nlu ----------------> Training phrases for Rasa NLU
+│   └── others -------------> Other data files
+├── main
+│   └── saved_model --------> Saved model for NSFW image classification
+├── monitor ----------------> Monitoring system for websites
+└── utils ------------------> Utilities for the programs and other testing tools
+```
+
 ## Setup
 ```bash
 # install packages
@@ -14,7 +27,7 @@ pipenv shell
 make train-all
 # run the action server in vm/docker and set the ip in endpoints.yml
 python3 -m rasa_core_sdk.endpoint --actions main.actions
-# test model
+# test model with command line client
 make run-cmdline
 ```
 ### Telegram Setup

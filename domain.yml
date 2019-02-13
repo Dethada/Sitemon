@@ -4,9 +4,13 @@ entities:
 intents:
   - start
   - greet
+  - ask_whoisit
   - goodbye
   - help
   - detailed_help
+  - thank
+  - out_of_scope
+  - telljoke
   - nsfw_check
   - monitor
   - status
@@ -21,6 +25,10 @@ actions:
   - utter_goodbye
   - utter_help
   - utter_detailed_help
+  - utter_noproblem
+  - utter_outofscope
+  - utter_telljoke
+  - utter_ask_whoisit
   - utter_confirm_clearwatchlist
   - utter_sites_removed
   - utter_abort
@@ -34,14 +42,16 @@ actions:
 
 templates:
   utter_greet:
-    - text: "Hey! How are you?"
     - text: "Nice to meet you!"
-    - text: "How can I help you?"
 
   utter_goodbye:
     - text: "Bye!😢"
       image: "https://i.imgur.com/nGF1K8f.jpg"
     - text: "See you again!"
+    - text: "Goodbye!"
+    - text: "Bye!"
+    - text: "Ciao!"
+    - text: "Bye, was nice talking to you!"
 
   utter_confirm_clearwatchlist:
     - text: "Clear watchlist?"
@@ -61,7 +71,30 @@ templates:
     - text: "Hi! I am Sitemon, a bot that can monitor websites for you. If you need any further explanation for what functions please feel free to ask me to tell you more!"
 
   utter_detailed_help:
-    - text: "- You can start monitoring a site by typing \n 'add google.com to my watch list'. \n- If you wish to remove a site from your watchlist, simply type \n 'remove google.com from my watch list'. \n- Alternatively, you can empty your entire watch list by typing \n 'clear my watch list'"
+    - text: "- You can start monitoring a site by typing \n 'add google.com to my watch list'. \n- If you wish to remove a site from your watchlist, simply type \n 'remove google.com from my watch list'. \n- Alternatively, you can empty your entire watch list by typing \n 'clear my watch list'- You can check if a website is safe for work by typing\n 'is example.com nsfw'"
+
+  utter_noproblem:
+    - text: "You are welcome!"
+    - text: "No problem"
+    - text: "It's my pleasure"
+    - text: "Don't mention it"
+
+  utter_outofscope:
+    -text: "I'm sorry I can't help you."
+
+  utter_telljoke:
+    - text: "Why are eggs not very much into jokes? - Because they could crack up."
+    - text: "Do you know a tree’s favorite drink? - Root beer!"
+    - text: "Why do the French like to eat snails so much? - They can’t stand fast food."
+
+  utter_ask_whoisit:
+    - text: "I'm Sitemon! 🤖"
 
   utter_default:
     - text: "Sorry, I don't understand but feel free to ask me what I do!"
+    - text: "Sorry, I didn't get that 🤷🏻‍. Could you please rephrase?"
+    - text: "I didn't understand, could you rephrase that?"
+    - text: "I'm sorry, but I didn't understand you. Could you please rephrase what you just said?"
+    - text: "I'm afraid I didn't get what you just said. Could you rephrase that?"
+    - text: "I didn't quite get that, could you rephrase your message?"
+    - text: "Could you rephrase your message? I didn't get it, I'm sorry."
