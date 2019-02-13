@@ -5,8 +5,9 @@ import argparse
 
 # pip3 install --user imagehash
 
-parser = argparse.ArgumentParser(description='Get the perceptual hash of an image')
-parser.add_argument('-f','--file', help='File to be hashed', required=True)
+parser = argparse.ArgumentParser(
+    description='Get the perceptual hash of an image')
+parser.add_argument('-f', '--file', help='File to be hashed', required=True)
 args = vars(parser.parse_args())
 
 hash = imagehash.phash(Image.open(args['file']))

@@ -63,8 +63,10 @@ server {
 ```
 3. Run both the action server and rasa core. Using [pm2](https://github.com/Unitech/pm2) here as the process manager.
 ```bash
+# in the sitemon directory
 pm2 start 'make run-action'
 pm2 start 'make run-tele'
+pm2 start 'make run-monitor'
 ```
 4. Setup the webhook
 ```bash
