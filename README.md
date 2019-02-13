@@ -1,5 +1,7 @@
 # Sitemon Bot
 
+Chatbot that monitors websites
+
 ## Requirements
 - Python >= 3.6
 - [Pipenv](https://pipenv.readthedocs.io/en/latest/)
