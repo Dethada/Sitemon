@@ -155,12 +155,13 @@ def getsitehash(url):
     return sitehash
 
 
-def check(conn):
+def check(filename):
     """
     Goes through the database and does all the status checks on the sites
 
-    :param conn: database connection
+    :param filename: database filename
     """
+    conn = create_connection(filename)
     cur = conn.cursor()
     cur.execute("SELECT * FROM watchlist")
     rows = cur.fetchall()
@@ -199,6 +200,7 @@ def check(conn):
                         site.url, current_time(), str(err)))
                     update_sitedown(cur, site, 'true')
             conn.commit()
+    conn.close()
 
 
 def main():
@@ -206,14 +208,13 @@ def main():
     main function that runs the check function at set interval
     until keyboard interrupt is recieved
     """
-    conn = create_connection(DB_FILE)
     try:
         while True:
-            check(conn)
+            check(DB_FILE)
             time.sleep(CHECK_FREQUENCY)
     except KeyboardInterrupt:
         print('\nExiting...')
-        conn.close()
+        
 
 
 if __name__ == '__main__':
