@@ -20,12 +20,6 @@
 * goodbye
   - utter_goodbye
 
-## Help
-* help
-  - utter_help
-* detailed_help
-  - utter_detailed_help
-
 ## Is NSFW
 * nsfw_check
   - action_nsfw_check
