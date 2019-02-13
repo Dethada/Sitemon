@@ -93,3 +93,6 @@ curl -X POST \
        -d '{"chat_id": "<Chat ID>", "text": "This is a test from curl"}' \
        https://api.telegram.org/bot<TOKEN>/sendMessage
 ```
+
+## Credit
+[NSFW Model](https://github.com/rockyzhengwu/nsfw)
