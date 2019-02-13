@@ -20,11 +20,11 @@ DB_FILE = 'database.db'
 
 # Seconds between reading data from the database
 # Deafult 60 Seconds
-CHECK_FREQUENCY = 1
+CHECK_FREQUENCY = 60
 
 # Seconds between each poll to the website
-# Default 300 Seconds (5 mins)
-POLL_FREQUENCY = 5
+# Default 600 Seconds (10 mins)
+POLL_FREQUENCY = 600
 
 try:
     TELE_TOKEN = os.environ['TELE_TOKEN']
